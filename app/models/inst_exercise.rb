@@ -30,6 +30,9 @@ class InstExercise < ApplicationRecord
   #~ Hooks ....................................................................
   #~ Class methods ............................................................
   def self.save_data_from_json(book, inst_section, exercise_name, exercise_obj, update_mode = false)
+    Rails.logger.debug "InstExercise.save_data_from_json called"
+    Rails.logger.debug "  params: \#{params.inspect}"
+    Rails.logger.debug "  exercise_obj: \#{exercise_obj.inspect}"
     # puts "inst_exercises"
     require 'json'
     ex = InstExercise.find_by short_name: exercise_name
@@ -39,6 +42,14 @@ class InstExercise < ApplicationRecord
         ex.short_name = exercise_obj['resource_name']
         ex.name = exercise_obj['resource_name']
         ex.learning_tool = exercise_obj['learning_tool']
+        ex.save
+      elsif exercise_obj['type'] == 'iframe'
+        ex = InstExercise.new
+        ex.short_name = exercise_name
+        ex.name = exercise_obj['long_name']
+        ex.av_address = exercise_obj['url']
+        ex.width = exercise_obj['width']
+        ex.height = exercise_obj['height']
         ex.save
       else
         ex = InstExercise.new
@@ -87,6 +98,13 @@ class InstExercise < ApplicationRecord
     end
 
     book_sec_ex.save
+
+    if exercise_obj['type'] == 'iframe'
+      Rails.logger.info "Saving iFrame exercise metadata for: #{exercise_name}"
+      Rails.logger.info "  Exercise Object: #{exercise_obj.inspect}"
+      Rails.logger.info "  InstExercise Attributes: #{inst_ex.attributes.inspect}"
+      Rails.logger.info "  InstBookSectionExercise Attributes: #{inst_be.attributes.inspect}"
+    end
   end
 
   def self.get_av_dimensions(av_path)
